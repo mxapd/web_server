@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 pub struct HttpRequest {
-    method: HttpMethod,
-    path: String,
-    version: String,
-    headers: HashMap<String, String>,
-    body: Vec<u8>,
+    pub method: HttpMethod,
+    pub path: String,
+    pub version: String,
+    pub headers: HashMap<String, String>,
+    pub body: Vec<u8>,
 }
 
 pub struct HttpResponse {

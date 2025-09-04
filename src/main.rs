@@ -1,7 +1,7 @@
+use std::collections::HashMap;
 use std::io::{Read, Result};
 use std::net::{TcpListener, TcpStream};
 use std::string;
-
 mod http;
 use http::{HttpMethod, HttpRequest, HttpStatus};
 
@@ -71,7 +71,7 @@ fn parse_request(buffer: &Vec<u8>) -> Result<()> {
     match header_parts[0].as_str() {
         "GET" => http_method = HttpMethod::GET,
         "POST" => http_method = HttpMethod::POST,
-        _ => println!("no match"),
+        _ => panic!("no match on http method"),
     }
 
     let http_path: String = header_parts[1];
@@ -80,13 +80,14 @@ fn parse_request(buffer: &Vec<u8>) -> Result<()> {
     // loop trough the rest and map header keys and values
 
     println!("METHOD: {}", &header_parts[0]);
-    //    let http_request: HttpRequest = {
-    //        http_method: http_method
-    //        http_path: path
-    //        http_version: version,
-    //        headers: HashMap<String, String>,
-    //        body: Vec<u8>,
-    //    };
+
+    let http_request: HttpRequest = HttpRequest {
+        method: http_method,
+        path: http_path,
+        version: http_version,
+        headers: HashMap::new(),
+        body: Vec::new(),
+    };
 
     Ok(())
 }
