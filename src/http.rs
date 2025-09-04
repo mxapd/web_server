@@ -16,12 +16,12 @@ pub struct HttpResponse {
     // maybe no need since we can derive from status reason_phrase: String,
 }
 
-enum HttpMethod {
+pub enum HttpMethod {
     GET,
     POST,
 }
 
-enum HttpStatus {
+pub enum HttpStatus {
     Ok = 200,
     NotFound = 404,
     InternalServerError = 500,

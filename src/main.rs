@@ -3,7 +3,7 @@ use std::net::{TcpListener, TcpStream};
 use std::string;
 
 mod http;
-use http::HttpRequest;
+use http::{HttpMethod, HttpRequest, HttpStatus};
 
 fn main() -> Result<()> {
     println!("Hello, world!");
@@ -59,6 +59,28 @@ fn parse_request(buffer: &Vec<u8>) -> Result<()> {
     // parse through the header to get:
     // method path version from the first line
     // headers every line until body separator
+
+    let header_parts = header_part
+        .split_whitespace()
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
+
+    let http_method: HttpMethod;
+
+    match header_parts[0].as_str() {
+        "GET" => http_method = HttpMethod::GET,
+        "POST" => http_method = HttpMethod::POST,
+        _ => println!("no match"),
+    }
+
+    println!("METHOD: {}", &header_parts[0]);
+    //    let http_request: HttpRequest = {
+    //        method:
+    //        path: String,
+    //        version: String,
+    //        headers: HashMap<String, String>,
+    //        body: Vec<u8>,
+    //    };
 
     Ok(())
 }
