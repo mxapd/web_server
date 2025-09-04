@@ -67,17 +67,23 @@ fn parse_request(buffer: &Vec<u8>) -> Result<()> {
 
     let http_method: HttpMethod;
 
+    // GET METHOD PART
     match header_parts[0].as_str() {
         "GET" => http_method = HttpMethod::GET,
         "POST" => http_method = HttpMethod::POST,
         _ => println!("no match"),
     }
 
+    let http_path: String = header_parts[1];
+    let http_version: String = header_parts[2];
+
+    // loop trough the rest and map header keys and values
+
     println!("METHOD: {}", &header_parts[0]);
     //    let http_request: HttpRequest = {
-    //        method:
-    //        path: String,
-    //        version: String,
+    //        http_method: http_method
+    //        http_path: path
+    //        http_version: version,
     //        headers: HashMap<String, String>,
     //        body: Vec<u8>,
     //    };
