@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::io::{Read, Result};
 use std::net::{TcpListener, TcpStream};
-use std::string;
+
 mod http;
 use http::{HttpMethod, HttpRequest, HttpStatus};
 
@@ -34,31 +34,26 @@ fn handle_client(mut stream: TcpStream) -> Result<()> {
     Ok(())
 }
 
-fn parse_request(buffer: &Vec<u8>) -> Result<()> {
+fn parse_request(buffer: &Vec<u8>) -> Result<HttpRequest> {
+    let body_data: Vec<u8>;
+    let separator: [u8; 4] = [0x0D, 0x0A, 0x0D, 0x0A];
+
+    if let Some(pos) = buffer
+        .windows(separator.len())
+        .position(|window| window == separator)
+    {
+        body_data = buffer[pos + separator.len()..].to_vec();
+    } else {
+        body_data = Vec::new();
+    }
+
+    dbg!(&body_data);
+
     let buffer_string = String::from_utf8_lossy(buffer);
 
     println!("{}", buffer_string);
 
     let (header_part, body_part) = buffer_string.split_once("\r\n\r\n").unwrap();
-
-    println!(
-        "header part: \n{}\n{}\n{}\n\n",
-        "-".repeat(50),
-        header_part,
-        "-".repeat(50)
-    );
-
-    println!(
-        "body part: \n{}\n{}\n{}\n\n",
-        "-".repeat(50),
-        body_part,
-        "-".repeat(50)
-    );
-
-    // save body as raw bytes
-    // parse through the header to get:
-    // method path version from the first line
-    // headers every line until body separator
 
     let header_parts = header_part
         .split_whitespace()
@@ -74,20 +69,36 @@ fn parse_request(buffer: &Vec<u8>) -> Result<()> {
         _ => panic!("no match on http method"),
     }
 
-    let http_path: String = header_parts[1];
-    let http_version: String = header_parts[2];
+    let http_path: &String = &header_parts[1];
+    let http_version: &String = &header_parts[2];
 
     // loop trough the rest and map header keys and values
 
-    println!("METHOD: {}", &header_parts[0]);
+    let mut http_headers: HashMap<String, String> = HashMap::new();
+
+    let header_rows = header_part.split('\n');
+
+    let mut i = 0;
+    for row in header_rows {
+        i += 1;
+
+        if i < 2 {
+            continue;
+        }
+
+        let (key, value) = row.split_once(':').unwrap();
+        let value = value.trim_start();
+
+        http_headers.insert(String::from(key), String::from(value));
+    }
 
     let http_request: HttpRequest = HttpRequest {
         method: http_method,
-        path: http_path,
-        version: http_version,
-        headers: HashMap::new(),
-        body: Vec::new(),
+        path: http_path.clone(),
+        version: http_version.clone(),
+        headers: http_headers,
+        body: body_data,
     };
 
-    Ok(())
+    Ok(http_request)
 }
