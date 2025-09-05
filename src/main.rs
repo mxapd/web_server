@@ -25,27 +25,39 @@ fn handle_client(mut stream: TcpStream) -> Result<()> {
 
     //println!("Recieved {} bytes from client", buf.len());
 
-    let _ = parse_request(&buf);
+    let http_request = parse_request(&buf)?;
 
-    if let Ok(text) = String::from_utf8(buf.clone()) {
-        //    println!("Message: {}", text);
-    }
+    // match http_request.path {
+    //     "/" =>
+    // }
 
     Ok(())
 }
 
-fn parse_request(buffer: &Vec<u8>) -> Result<HttpRequest> {
-    let body_data: Vec<u8>;
+fn split_headers_body(buffer: &[u8]) -> (&[u8], Option<&[u8]>) {
     let separator: [u8; 4] = [0x0D, 0x0A, 0x0D, 0x0A];
 
     if let Some(pos) = buffer
         .windows(separator.len())
         .position(|window| window == separator)
     {
-        body_data = buffer[pos + separator.len()..].to_vec();
+        (&buffer[..pos], Some(&buffer[pos + separator.len()..]))
     } else {
-        body_data = Vec::new();
+        (buffer, None)
     }
+}
+
+fn parse_request_line();
+fn parse_headers();
+
+fn parse_request(buffer: &Vec<u8>) -> Result<HttpRequest> {
+    // TODO: revamp parsing, rn its splitting twice once using bytes and once after turning it into
+    // a string. Would like byte split to get headers, body. then turn headers into string or vec
+    // to continue parsing
+
+    // TODO: Split into smaller functions
+
+    // TODO: Error handling, returning errors. Create custom error HttpParseError
 
     dbg!(&body_data);
 

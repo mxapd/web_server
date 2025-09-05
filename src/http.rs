@@ -5,7 +5,7 @@ pub struct HttpRequest {
     pub path: String,
     pub version: String,
     pub headers: HashMap<String, String>,
-    pub body: Vec<u8>,
+    pub body: Option<Vec<u8>>,
 }
 
 pub struct HttpResponse {
