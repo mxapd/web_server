@@ -4,7 +4,21 @@ use std::io::Read;
 use std::net::TcpStream;
 use std::result::Result;
 
+// TODO: change read_to_end to read instantly somehow, maybe wrap in buffered reader or something
+//       like that
 // TODO: Error handling, returning errors. Create custom error HttpParseError
+// TODO: Router function that looks at the route in the request and decides which static page to
+//       serve
+// TODO: File loading eg 'index.html'
+
+struct Html {
+    content: String,
+}
+
+impl Html {
+    //TODO: fn from_file()
+    //TODO: fn into_bytes()
+}
 
 struct HttpRequest {
     method: HttpMethod,
@@ -39,7 +53,7 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     let mut buf: Vec<u8> = Vec::new();
     stream.read_to_end(&mut buf)?;
 
-    //println!("Recieved {} bytes from client", buf.len());
+    println!("Recieved {} bytes from client", buf.len());
 
     let http_request = parse_request(&buf)?;
 
