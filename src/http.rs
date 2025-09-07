@@ -1,3 +1,4 @@
+use std::clone;
 use std::collections::HashMap;
 use std::error::Error;
 use std::fs::File;
@@ -46,6 +47,7 @@ struct HttpRequest {
     body: Option<Vec<u8>>,
 }
 
+#[derive(Clone)]
 struct HttpResponse {
     version: String,
     headers: HashMap<String, String>,
@@ -84,6 +86,7 @@ enum HttpMethod {
     POST,
 }
 
+#[derive(Clone)]
 enum HttpStatus {
     Ok = 200,
     NotFound = 404,
@@ -94,6 +97,7 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     println!("Client connected: {:?}", stream.peer_addr()?);
 
     let mut buf: Vec<u8> = Vec::new();
+
     stream.read_to_end(&mut buf)?;
 
     println!("Recieved {} bytes from client", buf.len());
@@ -105,7 +109,7 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
             let html = Html::from_file(String::from("index.html"))?;
             let response = HttpResponse::from_html(html, HttpStatus::Ok);
 
-            //send_response();
+            send_response(stream, response)?;
         }
         _ => panic!("route not found"),
     }
@@ -113,11 +117,11 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn send_response(stream: TcpStream, response: HttpResponse) -> Result<(), Box<dyn Error>> {
+fn send_response(mut stream: TcpStream, response: HttpResponse) -> Result<(), Box<dyn Error>> {
     let mut response_string = format!(
         "{} {} {}\r\n",
         response.version,
-        response.status_code as u16,
+        response.status_code.clone() as u16,
         response.reason_phrase()
     );
 
