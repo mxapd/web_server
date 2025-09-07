@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::io::Read;
+use std::fs::File;
+use std::io::{BufReader, Read, Write};
 use std::net::TcpStream;
 use std::result::Result;
 
@@ -9,15 +10,32 @@ use std::result::Result;
 // TODO: Error handling, returning errors. Create custom error HttpParseError
 // TODO: Router function that looks at the route in the request and decides which static page to
 //       serve
-// TODO: File loading eg 'index.html'
 
 struct Html {
     content: String,
 }
 
 impl Html {
-    //TODO: fn from_file()
-    //TODO: fn into_bytes()
+    fn from_file(filepath: String) -> Result<Html, Box<dyn Error>> {
+        let file = File::open(filepath)?;
+        let mut buf_reader = BufReader::new(file);
+        let mut contents = String::new();
+        buf_reader.read_to_string(&mut contents)?;
+
+        let html = Html { content: contents };
+
+        Ok(html)
+    }
+
+    fn new() -> Html {
+        Html {
+            content: String::new(),
+        }
+    }
+
+    fn into_bytes(self) -> Vec<u8> {
+        self.content.into_bytes()
+    }
 }
 
 struct HttpRequest {
@@ -34,6 +52,31 @@ struct HttpResponse {
     body: Vec<u8>,
     status_code: HttpStatus,
     // maybe no need since we can derive from status reason_phrase: String,
+}
+
+impl HttpResponse {
+    fn from_html(html: Html, status: HttpStatus) -> Self {
+        let html_bytes = html.into_bytes();
+
+        let mut headers = HashMap::new();
+        headers.insert("Content-Length".to_string(), html_bytes.len().to_string());
+        headers.insert(String::from("Content-Type"), String::from("text/html"));
+
+        HttpResponse {
+            version: String::from("HTTP/1.1"),
+            headers: headers,
+            body: html_bytes,
+            status_code: status,
+        }
+    }
+
+    fn reason_phrase(&self) -> &str {
+        match self.status_code {
+            HttpStatus::Ok => "OK",
+            HttpStatus::NotFound => "Not Found",
+            HttpStatus::InternalServerError => "Internal Server Error",
+        }
+    }
 }
 
 enum HttpMethod {
@@ -57,9 +100,35 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
 
     let http_request = parse_request(&buf)?;
 
-    // match http_request.path {
-    //     "/" =>
-    // }
+    match http_request.path.as_str() {
+        "/" => {
+            let html = Html::from_file(String::from("index.html"))?;
+            let response = HttpResponse::from_html(html, HttpStatus::Ok);
+
+            //send_response();
+        }
+        _ => panic!("route not found"),
+    }
+
+    Ok(())
+}
+
+fn send_response(stream: TcpStream, response: HttpResponse) -> Result<(), Box<dyn Error>> {
+    let mut response_string = format!(
+        "{} {} {}\r\n",
+        response.version,
+        response.status_code as u16,
+        response.reason_phrase()
+    );
+
+    for (key, value) in &response.headers {
+        response_string.push_str(format!("{}: {}\r\n", key, value).as_str());
+    }
+
+    response_string.push_str("Connection: close \r\n\r\n");
+
+    stream.write_all(response_string.as_bytes())?;
+    stream.write_all(&response.body)?;
 
     Ok(())
 }

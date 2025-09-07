@@ -5,8 +5,6 @@ mod http;
 use http::handle_client;
 
 fn main() -> Result<()> {
-    println!("Hello, world!");
-
     let listener = TcpListener::bind("127.0.0.1:2323")?;
 
     for stream in listener.incoming() {
