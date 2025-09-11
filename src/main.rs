@@ -2,7 +2,6 @@ mod html;
 mod http;
 mod request_actor;
 
-use http::handle_client;
 use request_actor::RequestActor;
 use std::io::Result;
 use std::net::TcpListener;
@@ -18,7 +17,6 @@ fn main() -> Result<()> {
             let actor = RequestActor::new(stream.unwrap());
             actor.run().unwrap();
         });
-        //let _ = handle_client(stream?);
     }
 
     Ok(())

@@ -8,11 +8,10 @@ use crate::html;
 
 use html::Html;
 
-// TODO: change read_to_end to read instantly somehow, maybe wrap in buffered reader or something
-//       like that
 // TODO: Error handling, returning errors. Create custom error HttpParseError
 // TODO: Router function that looks at the route in the request and decides which static page to
 //       serve
+// TODO: Logging
 
 struct HttpRequest {
     method: HttpMethod,
@@ -91,6 +90,17 @@ pub fn handle_client(stream: TcpStream) -> Result<(), Box<dyn Error>> {
     match http_request.path.as_str() {
         "/" => {
             let html = Html::from_file("index.html".to_string());
+            println!("loaded file result: {:?}", html);
+
+            let html = html?; // only propagate after printing
+
+            let response = HttpResponse::from_html(html, HttpStatus::Ok);
+            println!("built response");
+
+            send_response(stream, response)?;
+        }
+        "/nej" => {
+            let html = Html::from_file("nej.html".to_string());
             println!("loaded file result: {:?}", html);
 
             let html = html?; // only propagate after printing
