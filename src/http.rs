@@ -1,43 +1,18 @@
-use std::clone;
 use std::collections::HashMap;
 use std::error::Error;
-use std::fs::File;
-use std::io::{BufReader, Read, Write};
+use std::io::{BufReader, Write, prelude::*};
 use std::net::TcpStream;
 use std::result::Result;
+
+use crate::html;
+
+use html::Html;
 
 // TODO: change read_to_end to read instantly somehow, maybe wrap in buffered reader or something
 //       like that
 // TODO: Error handling, returning errors. Create custom error HttpParseError
 // TODO: Router function that looks at the route in the request and decides which static page to
 //       serve
-
-struct Html {
-    content: String,
-}
-
-impl Html {
-    fn from_file(filepath: String) -> Result<Html, Box<dyn Error>> {
-        let file = File::open(filepath)?;
-        let mut buf_reader = BufReader::new(file);
-        let mut contents = String::new();
-        buf_reader.read_to_string(&mut contents)?;
-
-        let html = Html { content: contents };
-
-        Ok(html)
-    }
-
-    fn new() -> Html {
-        Html {
-            content: String::new(),
-        }
-    }
-
-    fn into_bytes(self) -> Vec<u8> {
-        self.content.into_bytes()
-    }
-}
 
 struct HttpRequest {
     method: HttpMethod,
@@ -93,21 +68,35 @@ enum HttpStatus {
     InternalServerError = 500,
 }
 
-pub fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
+pub fn handle_client(stream: TcpStream) -> Result<(), Box<dyn Error>> {
     println!("Client connected: {:?}", stream.peer_addr()?);
 
-    let mut buf: Vec<u8> = Vec::new();
+    let mut reader = BufReader::new(&stream);
+    let mut request_data = Vec::new();
 
-    stream.read_to_end(&mut buf)?;
+    loop {
+        let mut line = Vec::new();
+        reader.read_until(b'\n', &mut line)?;
+        request_data.extend_from_slice(&line);
 
-    println!("Recieved {} bytes from client", buf.len());
+        if line == b"\r\n" || line == b"\n" {
+            break;
+        }
+    }
 
-    let http_request = parse_request(&buf)?;
+    println!("Received {} bytes from client", request_data.len());
+
+    let http_request = parse_request(&request_data)?;
 
     match http_request.path.as_str() {
         "/" => {
-            let html = Html::from_file(String::from("index.html"))?;
+            let html = Html::from_file("index.html".to_string());
+            println!("loaded file result: {:?}", html);
+
+            let html = html?; // only propagate after printing
+
             let response = HttpResponse::from_html(html, HttpStatus::Ok);
+            println!("built response");
 
             send_response(stream, response)?;
         }
@@ -118,6 +107,8 @@ pub fn handle_client(mut stream: TcpStream) -> Result<(), Box<dyn Error>> {
 }
 
 fn send_response(mut stream: TcpStream, response: HttpResponse) -> Result<(), Box<dyn Error>> {
+    println!("entered send response");
+
     let mut response_string = format!(
         "{} {} {}\r\n",
         response.version,
@@ -131,8 +122,12 @@ fn send_response(mut stream: TcpStream, response: HttpResponse) -> Result<(), Bo
 
     response_string.push_str("Connection: close \r\n\r\n");
 
+    println!("{}", response_string);
+
     stream.write_all(response_string.as_bytes())?;
     stream.write_all(&response.body)?;
+
+    stream.flush()?;
 
     Ok(())
 }
@@ -153,7 +148,7 @@ fn split_headers_body(buffer: &[u8]) -> (&[u8], Option<&[u8]>) {
 fn parse_request_line(header_data: &[u8]) -> (HttpMethod, String, String) {
     let header_string = String::from_utf8_lossy(header_data);
 
-    println!("{}", header_string);
+    println!("\nHeader:\n{}", header_string);
 
     let header_parts = header_string
         .split_whitespace()

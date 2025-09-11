@@ -1,8 +1,11 @@
+mod html;
+mod http;
+
+use http::handle_client;
 use std::io::Result;
 use std::net::TcpListener;
 
-mod http;
-use http::handle_client;
+// TODO: Add logging
 
 fn main() -> Result<()> {
     let listener = TcpListener::bind("127.0.0.1:2323")?;
