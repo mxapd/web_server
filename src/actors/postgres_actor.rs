@@ -2,15 +2,15 @@ use crate::actors::messages::DatabaseMessage;
 
 pub struct PostgresActor {
     client: postgres::Client,
-    receiver: std::sync::mpsc::Receiver<DatabaseMessage>,
+    mailbox: std::sync::mpsc::Receiver<DatabaseMessage>,
 }
 
 impl PostgresActor {
     pub fn new(
         client: postgres::Client,
-        receiver: std::sync::mpsc::Receiver<DatabaseMessage>,
+        mailbox: std::sync::mpsc::Receiver<DatabaseMessage>,
     ) -> Self {
-        Self { client, receiver }
+        Self { client, mailbox }
     }
 
     pub fn run(self) {}

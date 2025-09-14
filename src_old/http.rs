@@ -9,8 +9,6 @@ use crate::html;
 use html::Html;
 
 // TODO: Error handling, returning errors. Create custom error HttpParseError
-// TODO: Router function that looks at the route in the request and decides which static page to
-//       serve
 // TODO: Logging
 
 struct HttpRequest {

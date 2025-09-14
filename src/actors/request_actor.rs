@@ -1,31 +1,36 @@
-use crate::actors::messages::DatabaseMessage;
+use crate::actors::actor_directory::ActorDirectory;
+use crate::actors::messages::RouterMessage;
 use crate::http::http_method::HttpMethod;
 use crate::http::http_request::HttpRequest;
+use crate::http::http_response::HttpResponse;
 
 use std::collections::HashMap;
 use std::error::Error;
 use std::io::{BufReader, prelude::*};
 use std::net::TcpStream;
-use std::sync::mpsc::Sender;
+use std::sync::{Arc, mpsc};
 
 pub struct RequestActor {
     stream: TcpStream,
-    database_actor_address: Sender<DatabaseMessage>,
+    actor_directory: Arc<ActorDirectory>,
 }
 
 impl RequestActor {
-    pub fn new(stream: TcpStream, database_actor_address: Sender<DatabaseMessage>) -> Self {
+    pub fn new(stream: TcpStream, actor_directory: Arc<ActorDirectory>) -> Self {
         Self {
             stream,
-            database_actor_address,
+            actor_directory,
         }
     }
 
     pub fn run(self) {
-        Self::handle_client(self.stream).unwrap();
+        Self::handle_client(self.stream, self.actor_directory).unwrap();
     }
 
-    fn handle_client(stream: TcpStream) -> Result<(), Box<dyn Error>> {
+    fn handle_client(
+        stream: TcpStream,
+        actor_directory: Arc<ActorDirectory>,
+    ) -> Result<(), Box<dyn Error>> {
         println!("Client connected: {:?}", stream.peer_addr()?);
 
         let mut reader = BufReader::new(&stream);
@@ -44,6 +49,18 @@ impl RequestActor {
         println!("Received {} bytes from client", request_data.len());
 
         let http_request = Self::parse_request(&request_data)?;
+
+        let (response_tx, response_rx): (mpsc::Sender<HttpResponse>, mpsc::Receiver<HttpResponse>) =
+            mpsc::channel();
+
+        actor_directory.router.send(RouterMessage::Route {
+            http_request,
+            response_tx,
+        })?;
+
+        let response = response_rx.recv()?;
+
+        Self::send_response(stream, response)?;
 
         Ok(())
     }
@@ -125,5 +142,31 @@ impl RequestActor {
         } else {
             (buffer, None)
         }
+    }
+
+    fn send_response(mut stream: TcpStream, response: HttpResponse) -> Result<(), Box<dyn Error>> {
+        println!("entered send response");
+
+        let mut response_string = format!(
+            "{} {} {}\r\n",
+            response.version,
+            response.status_code.clone() as u16,
+            response.reason_phrase()
+        );
+
+        for (key, value) in &response.headers {
+            response_string.push_str(format!("{}: {}\r\n", key, value).as_str());
+        }
+
+        response_string.push_str("Connection: close \r\n\r\n");
+
+        println!("{}", response_string);
+
+        stream.write_all(response_string.as_bytes())?;
+        stream.write_all(&response.body)?;
+
+        stream.flush()?;
+
+        Ok(())
     }
 }

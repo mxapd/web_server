@@ -1,4 +1,5 @@
 use crate::http::http_request::HttpRequest;
+use crate::http::http_response::HttpResponse;
 use std::result::Result;
 use std::sync::mpsc::Sender;
 
@@ -11,5 +12,8 @@ pub enum DatabaseMessage {
 }
 
 pub enum RouterMessage {
-    Route { http_request: HttpRequest },
+    Route {
+        http_request: HttpRequest,
+        response_tx: Sender<HttpResponse>,
+    },
 }
