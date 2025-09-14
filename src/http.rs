@@ -92,7 +92,7 @@ pub fn handle_client(stream: TcpStream) -> Result<(), Box<dyn Error>> {
             let html = Html::from_file("index.html".to_string());
             println!("loaded file result: {:?}", html);
 
-            let html = html?; // only propagate after printing
+            let html = html?;
 
             let response = HttpResponse::from_html(html, HttpStatus::Ok);
             println!("built response");
@@ -110,6 +110,7 @@ pub fn handle_client(stream: TcpStream) -> Result<(), Box<dyn Error>> {
 
             send_response(stream, response)?;
         }
+
         _ => panic!("route not found"),
     }
 

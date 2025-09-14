@@ -1,11 +1,13 @@
 // event loop for handling incoming messages
-//
 
-pub struct PSQLActor {}
+pub struct PostgresActor {
+    client: postgres::Client,
+}
 
-impl PSQLActor {
-    //pub fn new(stream: TcpStream) -> Self {
-    //}
+impl PostgresActor {
+    pub fn new(client: postgres::Client) -> Self {
+        Self { client }
+    }
 
-    //pub fn run(self) {}
+    pub fn run(self) {}
 }
