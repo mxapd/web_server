@@ -1,5 +1,3 @@
-// event loop for handling incoming messages
-
 pub struct PostgresActor {
     client: postgres::Client,
 }
