@@ -6,7 +6,7 @@ use std::sync::mpsc::Sender;
 pub enum DatabaseMessage {
     Query {
         sql: String,
-        response: Sender<Result<Vec<postgres::Row>, Box<dyn std::error::Error + Send + Sync>>>,
+        response_tx: Sender<Result<Vec<postgres::Row>, Box<dyn std::error::Error + Send + Sync>>>,
     },
     Shutdown,
 }
@@ -20,6 +20,11 @@ pub enum RouterMessage {
 
 pub enum HandlerMessage {
     Home {
+        request: HttpRequest,
+        response_tx: Sender<HttpResponse>,
+    },
+
+    Articles {
         request: HttpRequest,
         response_tx: Sender<HttpResponse>,
     },

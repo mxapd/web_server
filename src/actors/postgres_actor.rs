@@ -13,5 +13,15 @@ impl PostgresActor {
         Self { client, mailbox }
     }
 
-    pub fn run(self) {}
+    pub fn run(mut self) {
+        for message in self.mailbox {
+            match message {
+                DatabaseMessage::Query { sql, response_tx } => {
+                    let result = self.client.query(&sql, &[]);
+                    let _ = response_tx.send(result);
+                }
+                _ => println!("PostgresActor: unknown message received"),
+            }
+        }
+    }
 }
