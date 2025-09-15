@@ -11,9 +11,6 @@ mod server;
 //TODO: Reduce or remove all blocking actions by using async
 //TODO: Add timeouts to stop connections from lasting forever
 //TODO: Add logging and metrics
-//
-//TODO: handlers module. ex handlers::home_page() and more
-//TODO: htmlbuilder
 
 fn main() {
     server::start_server("127.0.0.1:2323").unwrap();
