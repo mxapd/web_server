@@ -5,7 +5,7 @@ use crate::http::http_status::HttpStatus;
 
 use std::error::Error;
 
-pub fn home_page() -> Result<HttpResponse, Box<dyn Error>> {
+pub fn handle_request() -> Result<HttpResponse, Box<dyn Error>> {
     let html_string = HtmlBuilder::new()
         .title("Test Title")
         .add_h1("Heading1")

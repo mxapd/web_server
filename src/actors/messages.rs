@@ -17,3 +17,10 @@ pub enum RouterMessage {
         response_tx: Sender<HttpResponse>,
     },
 }
+
+pub enum HandlerMessage {
+    Home {
+        request: HttpRequest,
+        response_tx: Sender<HttpResponse>,
+    },
+}
