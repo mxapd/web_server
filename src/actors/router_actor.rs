@@ -1,9 +1,7 @@
-use crate::http::http_response::HttpResponse;
-use crate::http::http_status::HttpStatus;
-use std::sync::mpsc::Receiver;
-
-use crate::html::Html;
+use crate::handlers;
 use crate::{actors::messages::RouterMessage, http::http_method::HttpMethod};
+
+use std::sync::mpsc::Receiver;
 
 pub struct RouterActor {
     mailbox: Receiver<RouterMessage>,
@@ -23,17 +21,11 @@ impl RouterActor {
                     http_request,
                     response_tx,
                 } => {
-                    let response = match (http_request.method, http_request.path.as_str()) {
+                    match (http_request.method, http_request.path.as_str()) {
                         (HttpMethod::GET, "/") => {
-                            let html = Html::from_file("index.html".to_string());
-                            println!("loaded file result: {:?}", html);
+                            let response = handlers::home::home_page().unwrap();
 
-                            let html = html.unwrap();
-
-                            let response = HttpResponse::from_html(html, HttpStatus::Ok);
-                            println!("built response");
-
-                            response_tx.send(response);
+                            let _ = response_tx.send(response);
                         }
                         _ => println!("Route not found!"),
                     };

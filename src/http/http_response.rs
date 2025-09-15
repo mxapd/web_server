@@ -1,8 +1,6 @@
-use crate::html::Html;
+use crate::html::html::Html;
 use crate::http::http_status::HttpStatus;
 use std::collections::HashMap;
-use std::error::Error;
-use std::net::TcpStream;
 
 #[derive(Clone)]
 pub struct HttpResponse {

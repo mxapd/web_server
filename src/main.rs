@@ -1,4 +1,5 @@
 mod actors;
+mod handlers;
 mod html;
 mod http;
 mod server;
